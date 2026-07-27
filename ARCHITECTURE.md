@@ -38,11 +38,18 @@ Do not invent a third numeric algorithm in grounded-llm — call this service (o
 ## Integration sketch
 
 ```text
-grounded-llm / grounded-agent / vLLM callback
-        │  VerifyText / VerifyStream
-        ▼
-grounded-guardrails :50052
-        │
-        ├─ pii_block
-        └─ numeric_verify vs retrieval context
+                    ┌─────────────────────┐
+   client / agent ──┤  grounded-llm        │
+                    │  Retriever :50051   │
+                    │  Go server :8080    │
+                    └─────────┬───────────┘
+                              │ GUARDRAILS_MODE=remote|hybrid
+                              │ VerifyText
+                    ┌─────────▼───────────┐
+                    │ grounded-guardrails │
+                    │ gRPC :50052         │
+                    │ Rust ref + Go host  │
+                    └─────────────────────┘
 ```
+
+Wire docs: [grounded-llm docs/en/GUARDRAILS.md](https://github.com/kantik001/grounded-llm/blob/feat/guardrails-remote-verify/docs/en/GUARDRAILS.md).
