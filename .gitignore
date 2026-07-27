@@ -1,0 +1,20 @@
+# Rust
+rust/target/
+**/*.rs.bk
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Python / Go (future)
+**/__pycache__/
+**/.venv/
+**/bin/

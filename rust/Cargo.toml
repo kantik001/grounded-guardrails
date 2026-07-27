@@ -1,0 +1,24 @@
+[package]
+name = "grounded-guardrails"
+version = "0.1.0"
+edition = "2024"
+description = "Token-level verification primitives for grounded LLM inference"
+license = "MIT"
+repository = "https://github.com/kantik001/grounded-guardrails"
+readme = "../README.md"
+
+[dependencies]
+thiserror = "2"
+tracing = "0.1"
+
+[dev-dependencies]
+criterion = "0.5"
+proptest = "1"
+
+[[bench]]
+name = "token_buffer"
+harness = false
+
+[lib]
+name = "grounded_guardrails"
+path = "src/lib.rs"
