@@ -60,8 +60,8 @@ Shipped:
 
 Next:
 
-- Wire into [grounded-llm](https://github.com/kantik001/grounded-llm) verify path
-- Optional Rust cdylib FFI so Go calls Rust without a Go port
+- Wire into [grounded-llm](https://github.com/kantik001/grounded-llm) verify path — **done** (`GUARDRAILS_MODE=remote`)
+- Optional Rust cdylib FFI so Go host calls Rust without a Go port
 - vLLM adapter
 
 ## Ecosystem
