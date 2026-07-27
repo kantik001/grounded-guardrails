@@ -70,6 +70,7 @@ Next:
 |------|------|
 | [grounded-llm](https://github.com/kantik001/grounded-llm) | Cited RAG + Retriever `:50051` |
 | [grounded-bench](https://github.com/kantik001/grounded-bench) | Offline NVR / CP / HR / RR benchmark |
+| [grounded-vllm](https://github.com/kantik001/grounded-vllm) | vLLM serving-path verify proxy |
 | [mcp-gateway](https://github.com/kantik001/mcp-gateway) | MCP HTTP bridge |
 | [grounded-agent](https://github.com/kantik001/grounded-agent) | ReAct orchestrator |
 | **grounded-guardrails** | Verify service `:50052` |
