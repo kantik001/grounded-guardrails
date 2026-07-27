@@ -3,73 +3,81 @@
 [![CI](https://github.com/kantik001/grounded-guardrails/actions/workflows/ci.yml/badge.svg)](https://github.com/kantik001/grounded-guardrails/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/Rust-1.85%2B-orange?logo=rust)](rust/Cargo.toml)
+[![Go](https://img.shields.io/badge/Go-1.25-00ADD8?logo=go)](go/go.mod)
 
-**Token-level verification primitives** for grounded LLM inference. Part of the [Grounded](https://github.com/kantik001/grounded-llm) verifiable AI ecosystem.
+**Token-level verification** for grounded LLM inference. Part of the [Grounded](https://github.com/kantik001/grounded-llm) ecosystem.
 
-> Block bad numbers and PII at token *N*, not after the full answer is generated.
+> Block bad numbers and PII early — not after a full hallucinated answer.
 
 | | |
 |---|---|
-| **Hot path** | Fixed-capacity ring buffer — no allocation after init |
-| **Rules** | Numeric verify (Δ ≤ 0.01) + regex PII detect/mask |
-| **Port (planned gRPC)** | `:50052` (Retriever stays on `:50051`) |
-| **Role in stack** | Rust = source of truth; Go/Python call in |
+| **Rust core** | Ring buffer + reference PII/numeric algorithms + benches |
+| **Go gRPC** | `GuardrailsService` on **`:50052`** (Retriever stays `:50051`) |
+| **Rules** | `numeric_verify` (Δ ≤ 0.01), `pii_block` |
 
-## Status (v0.1.0)
+## Quick start — gRPC
 
-Shipped:
+```bash
+cd go
+go test ./...
+go run ./cmd/server
+# listens on :50052
+```
 
-- `TokenRingBuffer` — streaming token window
-- `PiiDetector` — email / phone / SSN / card + masking
-- `extract_numerics` / `verify_answer_against_context` — canonical numeric algorithm
-- Unit + property tests, Criterion benches, CI
+```bash
+# requires grpcurl
+grpcurl -plaintext localhost:50052 list
+grpcurl -plaintext localhost:50052 grpc.health.v1.Health/Check
 
-Next:
+grpcurl -plaintext -d '{
+  "text": "Revenue was 14 млн.",
+  "context": "Report: 14,000,000"
+}' localhost:50052 guardrails.v1.GuardrailsService/VerifyText
+```
 
-- Go gRPC `GuardrailsService` on `:50052`
-- Wire into [grounded-llm](https://github.com/kantik001/grounded-llm) verify path
+Docker:
 
-## Quick start
+```bash
+docker compose up --build -d
+```
+
+## Quick start — Rust
 
 ```bash
 cd rust
 cargo test
-cargo clippy -- -D warnings
-cargo bench --bench token_buffer
 cargo bench --bench pii_numeric
 ```
 
-```rust
-use grounded_guardrails::{
-    DEFAULT_TOLERANCE, PiiDetector, TokenRingBuffer, verify_answer_against_context,
-};
+## Status
 
-let mut buf = TokenRingBuffer::with_default_capacity();
-buf.push(42, 0);
+Shipped:
 
-let detector = PiiDetector::new();
-assert!(!detector.contains_pii("version 1.2.3"));
+- Rust: `TokenRingBuffer`, `PiiDetector`, canonical numeric extract/verify
+- Go: gRPC `VerifyText` + `VerifyStream`, health, reflection
+- Proto: [`proto/guardrails.proto`](proto/guardrails.proto)
+- CI for Rust + Go
 
-assert!(verify_answer_against_context(
-    "Revenue 14 млн",
-    "Report: 14,000,000",
-    DEFAULT_TOLERANCE,
-));
-```
+Next:
+
+- Wire into [grounded-llm](https://github.com/kantik001/grounded-llm) verify path
+- Optional Rust cdylib FFI so Go calls Rust without a Go port
+- vLLM adapter
 
 ## Ecosystem
 
 | Repo | Role |
 |------|------|
-| [grounded-llm](https://github.com/kantik001/grounded-llm) | Cited RAG + Spec v1 + gRPC Retriever `:50051` |
-| [mcp-gateway](https://github.com/kantik001/mcp-gateway) | HTTP bridge to MCP tools |
+| [grounded-llm](https://github.com/kantik001/grounded-llm) | Cited RAG + Retriever `:50051` |
+| [mcp-gateway](https://github.com/kantik001/mcp-gateway) | MCP HTTP bridge |
 | [grounded-agent](https://github.com/kantik001/grounded-agent) | ReAct orchestrator |
-| **grounded-guardrails** | Token-level verify (this repo) |
+| **grounded-guardrails** | Verify service `:50052` |
 
 ## Docs
 
 - [ARCHITECTURE.md](ARCHITECTURE.md)
 - [BENCHMARKS.md](BENCHMARKS.md)
+- [CHANGELOG.md](CHANGELOG.md)
 
 ## License
 

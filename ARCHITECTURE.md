@@ -1,56 +1,48 @@
 # Architecture — grounded-guardrails
 
-## Why this exists
+## Why
 
-[Grounded LLM](https://github.com/kantik001/grounded-llm) verifies numeric claims **after** generation. That catches hallucinations, but you already paid for a full decode.
+Post-hoc verify in Grounded LLM catches bad numbers **after** decode. This service exposes the same class of checks over **gRPC** so agents and future vLLM callbacks can fail fast.
 
-**grounded-guardrails** moves checks onto the **streaming / text path**: keep a bounded token window, run cheap rules (numeric continuity vs retrieved context, PII patterns), emit PASS / FLAG / BLOCK early.
+## Ports
 
-## Placement in the ecosystem
+| Service | Port |
+|---------|------|
+| grounded-llm Retriever | `:50051` |
+| **grounded-guardrails** | **`:50052`** |
 
-```text
-                    ┌─────────────────────┐
-   client / agent ──┤  grounded-agent     │
-                    └─────────┬───────────┘
-                              │ retrieve
-                    ┌─────────▼───────────┐
-                    │  grounded-llm        │
-                    │  Retriever :50051   │
-                    └─────────┬───────────┘
-                              │ verify (next integration)
-                    ┌─────────▼───────────┐
-                    │ grounded-guardrails │
-                    │ gRPC :50052 (soon)  │
-                    │ Rust hot path       │
-                    └─────────────────────┘
-```
-
-## Crate layout
+## Layout
 
 ```text
-rust/src/
-  lib.rs
-  buffer.rs    # TokenRingBuffer — O(1) push, iterator last_n
-  pii.rs       # PiiDetector — LazyLock regex, mask helpers
-  numeric.rs   # extract + tolerance verify (canonical algorithm)
+proto/guardrails.proto     # GuardrailsService contract
+rust/                      # Reference hot-path algorithms + benches
+go/
+  cmd/server/              # gRPC process
+  internal/rules/          # PII + numeric (parity with Rust semantics)
+  internal/service/        # VerifyText / VerifyStream
+  gen/guardrails/v1/       # generated stubs
 ```
 
-### Numeric (canonical)
+## RPC
 
-- Extracts grouped integers (`14,000,000`), decimals, percentages, `±` magnitudes
-- Optional RU/EN multipliers (`млн` / `million` → ×1e6) so shorthand answers match report figures
-- Default tolerance **0.01** (same absolute rule as Grounded LLM Go verify)
-- Empty answer numbers → **pass** (parity with grounded-llm)
+- **`VerifyText`** — unary; default rules `numeric_verify` + `pii_block`
+- **`VerifyStream`** — client stream of `TokenBatch`; prefers `text_delta` (decoded chunk). Token IDs alone → `FLAG` (`missing_text_delta`) until a tokenizer is wired
 
-Go/Python must **call** this logic later — do not maintain a third fork.
+## Algorithm ownership
 
-### PII
+- **Rust** = reference implementation (benches, future FFI/cdylib)
+- **Go** = gRPC host with **semantic parity** tests (same tolerance 0.01, RU `млн`, PII masks)
 
-- Types: email, phone (US/RU forms), SSN, 16-digit card
-- Explicit non-matches: `version 1.2.3`, `order #123-456`
+Do not invent a third numeric algorithm in grounded-llm — call this service (or later link the Rust lib).
 
-## Design constraints
+## Integration sketch
 
-1. One algorithm source of truth in Rust
-2. Guardrails port **`:50052`** (Retriever owns `:50051`)
-3. No CUDA until a serving-path profile demands it
+```text
+grounded-llm / grounded-agent / vLLM callback
+        │  VerifyText / VerifyStream
+        ▼
+grounded-guardrails :50052
+        │
+        ├─ pii_block
+        └─ numeric_verify vs retrieval context
+```

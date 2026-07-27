@@ -5,7 +5,11 @@
 ### Added
 
 - `TokenRingBuffer` — fixed-capacity streaming token window (zero growth after init)
-- `PiiDetector` — email / phone / SSN / credit-card detection + masking
-- `extract_numerics`, `verify_numeric`, `verify_answer_against_context` — canonical numeric verify (tolerance 0.01, RU/EN million shorthand)
+- `PiiDetector` — email / phone / SSN / credit-card detection + masking (Rust)
+- `extract_numerics`, `verify_numeric`, `verify_answer_against_context` — canonical numeric verify (Rust)
 - Criterion benches for buffer, PII, and numeric paths
-- GitHub Actions CI (fmt, clippy, test)
+- **Go gRPC** `GuardrailsService` on `:50052` (`VerifyText`, `VerifyStream`)
+- Proto [`proto/guardrails.proto`](proto/guardrails.proto) + health + reflection
+- Go rules parity package (`internal/rules`) + bufconn tests
+- Dockerfile / Compose / Makefile
+- GitHub Actions CI (Rust + Go)

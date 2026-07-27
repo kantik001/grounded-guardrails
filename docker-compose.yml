@@ -1,0 +1,7 @@
+services:
+  guardrails:
+    build: .
+    ports:
+      - "50052:50052"
+    environment:
+      GRPC_PORT: "50052"
