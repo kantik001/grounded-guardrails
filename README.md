@@ -61,8 +61,9 @@ Shipped:
 Next:
 
 - Wire into [grounded-llm](https://github.com/kantik001/grounded-llm) verify path — **done** (`GUARDRAILS_MODE=remote`)
+- Serving-path adapter — **done:** [grounded-vllm](https://github.com/kantik001/grounded-vllm)
 - Optional Rust cdylib FFI so Go host calls Rust without a Go port
-- vLLM adapter
+- Upstream: land [vLLM docs PR #50051](https://github.com/vllm-project/vllm/pull/50051)
 
 ## Ecosystem
 
