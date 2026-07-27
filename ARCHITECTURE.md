@@ -49,7 +49,12 @@ Do not invent a third numeric algorithm in grounded-llm — call this service (o
                     │ grounded-guardrails │
                     │ gRPC :50052         │
                     │ Rust ref + Go host  │
+                    └─────────▲───────────┘
+                              │ VerifyText / VerifyStream
+                    ┌─────────┴───────────┐
+                    │ grounded-vllm       │
+                    │ OpenAI proxy :8001  │──► vLLM :8000
                     └─────────────────────┘
 ```
 
-Wire docs: [grounded-llm docs/en/GUARDRAILS.md](https://github.com/kantik001/grounded-llm/blob/feat/guardrails-remote-verify/docs/en/GUARDRAILS.md).
+Wire docs: [grounded-llm docs/en/GUARDRAILS.md](https://github.com/kantik001/grounded-llm/blob/main/docs/en/GUARDRAILS.md) · serving-path adapter: [grounded-vllm](https://github.com/kantik001/grounded-vllm).
