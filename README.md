@@ -11,20 +11,21 @@
 | | |
 |---|---|
 | **Hot path** | Fixed-capacity ring buffer — no allocation after init |
+| **Rules** | Numeric verify (Δ ≤ 0.01) + regex PII detect/mask |
 | **Port (planned gRPC)** | `:50052` (Retriever stays on `:50051`) |
-| **Role in stack** | Rust = source of truth; Go/Python call in (no divergent reimplementations) |
+| **Role in stack** | Rust = source of truth; Go/Python call in |
 
 ## Status (v0.1.0)
 
 Shipped:
 
-- `TokenRingBuffer` — streaming token window for online checks
-- Unit + property tests, Criterion benches
-- CI (test, clippy, fmt)
+- `TokenRingBuffer` — streaming token window
+- `PiiDetector` — email / phone / SSN / card + masking
+- `extract_numerics` / `verify_answer_against_context` — canonical numeric algorithm
+- Unit + property tests, Criterion benches, CI
 
 Next:
 
-- PII regex detector + numeric extract/verify
 - Go gRPC `GuardrailsService` on `:50052`
 - Wire into [grounded-llm](https://github.com/kantik001/grounded-llm) verify path
 
@@ -34,18 +35,26 @@ Next:
 cd rust
 cargo test
 cargo clippy -- -D warnings
-cargo bench -p grounded-guardrails --bench token_buffer
+cargo bench --bench token_buffer
+cargo bench --bench pii_numeric
 ```
 
 ```rust
-use grounded_guardrails::TokenRingBuffer;
+use grounded_guardrails::{
+    DEFAULT_TOLERANCE, PiiDetector, TokenRingBuffer, verify_answer_against_context,
+};
 
-let mut buf = TokenRingBuffer::with_default_capacity(); // 4096
-buf.push(/* token_id */ 42, /* stream position */ 0);
-for (token_id, position) in buf.last_n(128) {
-    // run sliding-window rules on recent tokens
-    let _ = (token_id, position);
-}
+let mut buf = TokenRingBuffer::with_default_capacity();
+buf.push(42, 0);
+
+let detector = PiiDetector::new();
+assert!(!detector.contains_pii("version 1.2.3"));
+
+assert!(verify_answer_against_context(
+    "Revenue 14 млн",
+    "Report: 14,000,000",
+    DEFAULT_TOLERANCE,
+));
 ```
 
 ## Ecosystem

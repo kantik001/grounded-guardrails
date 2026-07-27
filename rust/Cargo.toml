@@ -8,6 +8,7 @@ repository = "https://github.com/kantik001/grounded-guardrails"
 readme = "../README.md"
 
 [dependencies]
+regex = "1"
 thiserror = "2"
 tracing = "0.1"
 
@@ -17,6 +18,10 @@ proptest = "1"
 
 [[bench]]
 name = "token_buffer"
+harness = false
+
+[[bench]]
+name = "pii_numeric"
 harness = false
 
 [lib]

@@ -4,39 +4,41 @@
 
 ```text
 OS:      Windows 10 (10.0.19045)
-CPU:     mid-range workstation (Criterion host)
 rustc:   1.97.1 (stable-x86_64-pc-windows-msvc)
 profile: cargo bench (optimized)
 date:    2026-07-27
 ```
 
-## Targets vs measured
+## Token ring buffer
 
 | Bench | Target | Measured | Status |
 |-------|--------|----------|--------|
-| 1M× `push` (capacity 4096) | &lt; 10 ms | **~4.26 ms** (~4.3 ns/op) | PASS |
-| 1M× `push` (capacity 256) | &lt; 10 ms | **~4.31 ms** | PASS |
-| `last_n(128)` on full buffer | &lt; 1 µs* | **~541 ns** | PASS |
+| 1M× `push` (capacity 4096) | &lt; 10 ms | **~4.26 ms** | PASS |
+| `last_n(128)` on full buffer | &lt; 1 µs | **~541 ns** | PASS |
 
-\*Original sketch said &lt; 100 ns for scanning 128 entries; that is unrealistic on a general-purpose CPU without a specialized micro-kernel. **&lt; 1 µs** (~4 ns/element) is the engineering acceptance bar.
+## PII + numeric
 
-## How to reproduce
+| Bench | Target | Measured | Status |
+|-------|--------|----------|--------|
+| `contains_pii` on 1KB | &lt; 50 µs | **~98 ns** (early exit on first hit) | PASS |
+| `detect` on 1KB (all matches) | — | **~128 µs** | info |
+| `extract_numerics` on 1KB | &lt; 100 µs | **~34 µs** | PASS |
+| verify 100 numbers vs context | &lt; 10 µs | **~4.2 µs** | PASS |
+
+## Reproduce
 
 ```bash
 cd rust
-# Windows: run from "x64 Native Tools" / vcvars64, or use CI (Linux)
 cargo bench --bench token_buffer
+cargo bench --bench pii_numeric
 ```
 
-## Criterion raw (sample-size 20)
+## Criterion raw (`pii_numeric`, sample-size 20)
 
 ```text
-token_ring_push/push_1m/256
-    time: [4.2355 ms 4.3066 ms 4.4501 ms]
-
-token_ring_push/push_1m/4096
-    time: [4.2360 ms 4.2626 ms 4.2922 ms]
-
-last_n_128_full_buffer
-    time: [540.09 ns 541.12 ns 542.27 ns]
+contains_pii_1kb              [97.857 ns 98.444 ns 99.101 ns]
+detect_pii_1kb                [127.62 µs 128.49 µs 129.36 µs]
+extract_numerics_1kb          [33.246 µs 33.623 µs 34.094 µs]
+verify_100_numbers            [4.1901 µs 4.2405 µs 4.2877 µs]
+verify_answer_against_context [1.2171 µs 1.2289 µs 1.2415 µs]
 ```

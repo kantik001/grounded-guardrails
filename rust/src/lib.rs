@@ -6,8 +6,17 @@
 //!
 //! # Modules
 //!
-//! - [`buffer`] — fixed-capacity ring buffer for streaming token IDs (zero growth after init)
+//! - [`buffer`] — fixed-capacity ring buffer for streaming token IDs
+//! - [`pii`] — regex PII detection + masking
+//! - [`numeric`] — numeric extract + tolerance verify (canonical algorithm)
 
 pub mod buffer;
+pub mod numeric;
+pub mod pii;
 
 pub use buffer::TokenRingBuffer;
+pub use numeric::{
+    DEFAULT_TOLERANCE, NumericValue, extract_numerics, unmatched_numerics,
+    verify_answer_against_context, verify_numeric,
+};
+pub use pii::{PiiDetector, PiiMatch, PiiType};
